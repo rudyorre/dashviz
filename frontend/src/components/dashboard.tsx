@@ -23,6 +23,7 @@ import {
   subDays,
   max,
 } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 import { DateRangePicker } from '@/components/dateRangePicker';
 import { Dropdown } from '@/components/dropdown';
@@ -108,20 +109,20 @@ export function Dashboard({
   const initialStartDate = new Date('01 January 2023');
   const initialEndDate = new Date('31 December 2023');
 
-  const [data, setData] = useState(initial_data);
-  const [dateRange, setDateRange] = useState({
-    startDate: initialStartDate,
-    endDate: initialEndDate,
+  const [data, setData] = useState<any>(initial_data);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: initialStartDate,
+    to: initialEndDate,
   });
 
   const [selectedPreset, setSelectedPreset] = useState<string>('Current Month');
   const [selectedPrevious, setSelectedPrevious] = useState<string>('Previous Period');
 
   const [chartDates, setChartDates] = useState({
-    currStart: dateRange.startDate,
-    currEnd: dateRange.endDate,
-    prevStart: dateRange.startDate,
-    prevEnd: dateRange.endDate,
+    currStart: dateRange.from,
+    currEnd: dateRange.to,
+    prevStart: dateRange.from,
+    prevEnd: dateRange.to,
   });
 
   const [chart, setChart] = useState({
@@ -161,33 +162,29 @@ export function Dashboard({
   };
 
   const handleClick = async () => {
-    if (typeof dateRange.startDate == 'undefined' || typeof dateRange.endDate == 'undefined') {
-      return;
-    }
-    const result = await getData(
-      dateRange.startDate,
-      dateRange.endDate,
-    );
+    // if (typeof dateRange.startDate == 'undefined' || typeof dateRange.endDate == 'undefined') {
+    //   return;
+    // }
+    const result = await getData(dateRange);
     setData(result);
     setChartType(chart.chartType);
     setChartName(chart.dashboardName);
   };
 
-  const handleDateRangeChange = async (startDate: any, endDate: any) => {
-    if (typeof startDate == 'undefined' || typeof endDate == 'undefined') {
-      return;
-    }
-
-    setDateRange({
-      startDate: startDate,
-      endDate: endDate,
-    });
+  const handleDateRangeChange = async (selectedDateRange: DateRange) => {
+    // if (typeof dateRange.from == 'undefined' || typeof endDate == 'undefined') {
+    //   return;
+    // }
+    setDateRange(selectedDateRange);
   };
 
   const fetchData = async (startDate: string, endDate: string) => {
     // Build SQL query
     const sqlQuery = `
-      ${chart.sqlQuery}
+      SELECT * FROM
+      (
+        ${chart.sqlQuery}
+      ) sub
       WHERE
         created_at >= '${startDate}'
         and created_at <= '${endDate}'
@@ -215,10 +212,13 @@ export function Dashboard({
   }
 
   // convert to two parameters of DateRange type
-  const getData = async (
-    startDate: Date,
-    endDate: Date,
-  ) => {
+  const getData = async (dateRange: DateRange) => {
+    if (!dateRange.from || !dateRange.to) {
+      return null;
+    }
+    const startDate = dateRange.from;
+    const endDate = dateRange.to;
+
     let currStartDate = startDate;
     let currEndDate = endDate;
 
@@ -354,10 +354,7 @@ export function Dashboard({
 
   useEffect(() => {
     (async () => {
-      const result = await getData(
-        dateRange.startDate,
-        dateRange.endDate,
-      );
+      const result = await getData(dateRange);
       setData(result);
     })();
   }, []);
@@ -365,7 +362,7 @@ export function Dashboard({
   return (<>
     <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
       <Dropdown options={['id4', 'id3', 'id2', 'id1']} onSelect={handleChartChange} />
-      <DateRangePicker onChange={handleDateRangeChange}/>
+      <DateRangePicker onChange={handleDateRangeChange} dateRange={dateRange}/>
       <Dropdown options={presetDropdown} onSelect={handlePresetChange} />
       <p className="text-gray-500">compared to</p>
       <Dropdown options={previousDropdown} onSelect={handlePreviousChange}/>
@@ -458,12 +455,12 @@ export function Dashboard({
     </ResponsiveContainer>
     <div className="w-screen sm:w-3/5 mb-8">
       <div className="flex justify-between text-sm mt-2">
-        <span className="text-indigo-600">{chartDates.currStart.toDateString()}</span>
-        <span className="text-indigo-600">{chartDates.currEnd.toDateString()}</span>
+        {/* <span className="text-indigo-600">{chartDates.currStart.toDateString()}</span>
+        <span className="text-indigo-600">{chartDates.currEnd.toDateString()}</span> */}
       </div>
       <div className="flex justify-between text-sm mt-2">
-        <span className="text-gray-500">{chartDates.prevStart.toDateString()}</span>
-        <span className="text-gray-500">{chartDates.prevEnd.toDateString()}</span>
+        {/* <span className="text-gray-500">{chartDates.prevStart.toDateString()}</span>
+        <span className="text-gray-500">{chartDates.prevEnd.toDateString()}</span> */}
       </div>
     </div>
   </>);
