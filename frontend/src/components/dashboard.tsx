@@ -31,56 +31,11 @@ import { DateRangePicker } from '@/components/dateRangePicker';
 import { Dropdown } from '@/components/dropdown';
 import { Button } from '@/components/ui/button';
 
-import { useState, useEffect } from 'react';
-import { SelectContent } from '@radix-ui/react-select';
+import { useState, useEffect, useRef } from 'react';
 
-import { getDateString, fetchData, getData, getVolume } from '@/lib/dashboardUtils';
-import { Chart } from '@/lib/types';
-
-const initial_data = [
-    {
-      name: 'Page A',
-      uv: 4000,
-      pv: 2400,
-      // amt: 2400,
-    },
-    {
-      name: 'Page B',
-      uv: 3000,
-      pv: 1398,
-      amt: 2210,
-    },
-    {
-      name: 'Page C',
-      uv: 2000,
-      pv: 9800,
-      amt: 2290,
-    },
-    {
-      name: 'Page D',
-      uv: 2780,
-      pv: 3908,
-      amt: 2000,
-    },
-    {
-      // name: 'Page E',
-      uv: 1890,
-      pv: 4800,
-      // amt: 2181,
-    },
-    {
-      // name: 'Page F',
-      uv: 2390,
-      pv: 3800,
-      amt: 2500,
-    },
-    {
-      name: 'Page G',
-      uv: 3490,
-      pv: 4300,
-      amt: 2100,
-    },
-  ];
+import { getData, getVolume } from '@/lib/dashboardUtils';
+import { Chart, Dashboard as DashboardType } from '@/lib/types';
+import { StringToBoolean } from 'class-variance-authority/types';
 
 const presetDropdown = [
   'Last 90 days',
@@ -95,18 +50,29 @@ const previousDropdown = [
   'Previous Period',
 ];
 
+interface DashboardProps {
+  name: string,
+  containerStyle: React.CSSProperties,
+  onClickDashboardItem: (dashboardItem: Chart) => void,
+};
+
 export function Dashboard({
-    className,
-    ...props
-}: React.HTMLAttributes<HTMLElement>) {
-  const [data, setData] = useState<any>(initial_data);
+  name,
+  containerStyle,
+  onClickDashboardItem,
+}: DashboardProps) {
+  const prevNameRef = useRef<string | null>(null);
+
+  const [data, setData] = useState<any>([]);
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date('01 January 2023'),
-    to: new Date('31 December 2023'),
+    from: undefined,
+    to: undefined,
   });
 
   const [selectedPreset, setSelectedPreset] = useState<string>('Current Month');
   const [selectedPrevious, setSelectedPrevious] = useState<string>('Previous Period');
+
+  const [charts, setCharts] = useState<Chart[]>([]);
 
   const [chartDates, setChartDates] = useState({
     currStart: dateRange.from,
@@ -116,17 +82,21 @@ export function Dashboard({
   });
 
   const [chart, setChart] = useState<Chart>({
+    name: 'name1',
     id: 'id1',
     dashboardName: 'Linear Transaction Data (Line Chart)',
     chartType: 'line',
     sqlQuery: 'select * from transactions_linear',
+    xAxisField: 'x-axis',
+    yAxisField: 'y-axis',
+    dateField: { table: 'transactions_linear', field: 'created_at'},
   });
 
   const [chartName, setChartName] = useState(chart.dashboardName);
 
   const [chartType, setChartType] = useState(chart.chartType);
   
-  const handlePresetChange = (selectedOption: string) => {
+  const handlePresetChange = async (selectedOption: string) => {
     setSelectedPreset(selectedOption);
     let from: Date;
     switch (selectedOption) {
@@ -147,7 +117,7 @@ export function Dashboard({
       from: from,
       to: startOfToday(),
     });
-    handleClick();
+    await handleClick();
   };
 
   const handleChartChange = async (selectedOption: string) => {
@@ -157,10 +127,14 @@ export function Dashboard({
       let raw = await response.json();
       raw = raw.chart[0];
       setChart({
+        name: '',
         id: selectedOption,
         dashboardName: raw.dashboardName,
         chartType: raw.chartType,
         sqlQuery: raw.sqlQuery,
+        xAxisField: '',
+        yAxisField: '',
+        dateField: { table: '', field: '' },
       });
     } catch (error) {
       throw error;
@@ -169,13 +143,14 @@ export function Dashboard({
     }
   }
 
-  const handlePreviousChange = (selectedOption: string) => {
+  const handlePreviousChange = async (selectedOption: string) => {
     setSelectedPrevious(selectedOption);
     // Do something with the selected preset, e.g., update your chart data
-    handleClick();
+    await handleClick();
   };
 
   const handleClick = async () => {
+    // console.log(dateRange.from?.toDateString(), '-', dateRange.to?.toDateString());
     if (!dateRange || !dateRange.from || !dateRange.to) {
       return null;
     }
@@ -226,12 +201,29 @@ export function Dashboard({
     }
     
     setSelectedPreset('Select');
-    handleClick();
+    await handleClick();
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetch(`http://localhost:3001/dashboard/${name}`);
+      const json = await data.json();
+      setCharts(json.charts);
+      const dashboard: DashboardType = json.dashboard;
+      const preset = {
+        'LAST_90_DAYS': 'Last 90 days',
+        'LAST_30_DAYS': 'Last 30 days',
+        'CURRENT_MONTH': 'Current Month',
+      }[dashboard.dateFilter.initialDateRange];
+      handlePresetChange(preset);
+    };
+
+    if (name !== prevNameRef.current) {
+      fetchData();
+      prevNameRef.current = name;
+    }
     handleClick();
-  }, []);
+  }, [dateRange, chart, selectedPrevious, charts, name]);
 
   return (<>
     <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
@@ -255,7 +247,6 @@ export function Dashboard({
         onSelect={handlePreviousChange}
         placeholder={selectedPrevious}
       />
-      <Button onClick={handleClick}>Update</Button>
     </div>
 
     <div className="w-screen sm:w-3/5 mt-8">

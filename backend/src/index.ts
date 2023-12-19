@@ -95,7 +95,7 @@ app.get('/dashboard/:name', async (req: Request, res: Response) => {
             return;
         }
 
-        const { data: chart, error: chartError } = await supabase
+        const { data: charts, error: chartError } = await supabase
             .from('chart')
             .select()
             .eq('dashboardName', req.params.name);
@@ -104,11 +104,11 @@ app.get('/dashboard/:name', async (req: Request, res: Response) => {
             throw chartError;
         }
 
-        if (!chart) { // When no chart is found
+        if (!charts) { // When no chart is found
             res.status(404).json({ error: 'No matching charts found.' });
             return;
         }
-        res.json({ dashboard, chart });
+        res.json({ dashboard: dashboard[0], charts });
     } catch (error) {
         console.error('Error fetching dashboard:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -133,9 +133,31 @@ app.get('/chart/:id', async (req: Request, res: Response) => {
             res.status(404).json({ error: 'No matching charts found.' });
             return;
         }
-    
+
         res.json({ chart });
-    }  catch (error) {
+    } catch (error) {
+        console.error('Error fetching dashboard:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/fetch-dashboard-names', async (req: Request, res: Response) => {
+    try {
+        const { data, error } = await supabase
+            .from('dashboard')
+            .select('name')
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            res.status(404).json({ error: 'No dashboards found.' });
+            return;
+        }
+
+        res.send(data);
+    } catch (error) {
         console.error('Error fetching dashboard:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
