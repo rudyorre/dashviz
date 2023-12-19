@@ -19,7 +19,7 @@ interface DateRangePickerProps {
     className?: string;
     onChange: (selectedDateRange: DateRange) => void;
     dateRange?: DateRange;
-}
+};
 
 export function DateRangePicker({
     className,
@@ -35,7 +35,7 @@ export function DateRangePicker({
 
     const handleDateChange = (newDate: DateRange) => {
       setSelectedDateRange(newDate);
-      if (onChange) {
+      if (onChange && newDate) {
           onChange(newDate);
       }
     }

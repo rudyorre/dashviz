@@ -8,30 +8,43 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface DropdownProps {
     options: any[];
     onSelect: (selectedValue: any) => void;
+    value?: string;
+    placeholder?: string;
 };
 
-export function Dropdown({ options, onSelect }: DropdownProps) {
-    const [value, setValue] = useState(options.slice(-1).toString());
+export function Dropdown({ options, onSelect, value, placeholder }: DropdownProps) {
+    const [selectedValue, setSelectedValue] = useState<string>(value || '');
+    const [key, setKey] = useState<number>(+new Date());
 
-    const handleSelect = (selectedValue: any) => {
-        setValue(selectedValue);
-        onSelect(selectedValue);
+    const handleSelect = (val: any) => {
+        setSelectedValue(val);
+        onSelect(val);
     };
+
+    useEffect(() => {
+      // // Reflect parent's update to dateRange
+      if (value && (!selectedValue || value !== selectedValue)) {
+        handleSelect(value);
+        setKey(+new Date());
+        console.log('set new key!');
+      }
+    }, [value, selectedValue]);
 
     return (
       <Select
+        key={key}
         // onValueChange={() => {}}
         onValueChange={(value) => handleSelect(value)}
         // defaultValue={options.slice(-1).toString()}
         // value={options.slice(-1).toString()}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder={options.slice(-1)}/>
+          <SelectValue placeholder={placeholder || 'Select'}/>
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

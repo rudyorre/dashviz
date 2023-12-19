@@ -22,6 +22,8 @@ import {
   subMonths,
   subDays,
   max,
+  startOfToday,
+  isEqual,
 } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
@@ -106,13 +108,10 @@ export function Dashboard({
     className,
     ...props
 }: React.HTMLAttributes<HTMLElement>) {
-  const initialStartDate = new Date('01 January 2023');
-  const initialEndDate = new Date('31 December 2023');
-
   const [data, setData] = useState<any>(initial_data);
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: initialStartDate,
-    to: initialEndDate,
+    from: new Date('01 January 2023'),
+    to: new Date('31 December 2023'),
   });
 
   const [selectedPreset, setSelectedPreset] = useState<string>('Current Month');
@@ -138,8 +137,26 @@ export function Dashboard({
   
   const handlePresetChange = (selectedOption: string) => {
     setSelectedPreset(selectedOption);
-    // Do something with the selected preset, e.g., update your chart data
-    console.log(`Selected preset: ${selectedOption}`);
+    let from: Date;
+    switch (selectedOption) {
+      case 'Current Month':
+        from = startOfMonth(startOfToday());
+        break;
+      case 'Last 30 days':
+        from = subDays(startOfToday(), 30);
+        break;
+      case 'Last 90 days':
+        from = subDays(startOfToday(), 90);
+        break;
+      default:
+        from = startOfToday();
+        break;
+    }
+    setDateRange({
+      from: from,
+      to: startOfToday(),
+    });
+    handleClick();
   };
 
   const handleChartChange = async (selectedOption: string) => {
@@ -158,7 +175,7 @@ export function Dashboard({
   const handlePreviousChange = (selectedOption: string) => {
     setSelectedPrevious(selectedOption);
     // Do something with the selected preset, e.g., update your chart data
-    console.log(`Selected previous: ${selectedOption}`);
+    handleClick();
   };
 
   const handleClick = async () => {
@@ -172,10 +189,32 @@ export function Dashboard({
   };
 
   const handleDateRangeChange = async (selectedDateRange: DateRange) => {
-    // if (typeof dateRange.from == 'undefined' || typeof endDate == 'undefined') {
-    //   return;
-    // }
+    if (!selectedDateRange.from || !selectedDateRange.to) {
+      return null;
+    }
     setDateRange(selectedDateRange);
+    let from: Date;
+    switch (selectedPreset) {
+      case 'Current Month':
+        from = startOfMonth(startOfToday());
+        break;
+      case 'Last 30 days':
+        from = subDays(startOfToday(), 30);
+        break;
+      case 'Last 90 days':
+        from = subDays(startOfToday(), 90);
+        break;
+      default:
+        from = startOfToday();
+        break;
+    }
+    const to: Date = startOfToday();
+    if (isEqual(startOfDay(selectedDateRange.from), from) && isEqual(startOfDay(selectedDateRange.to), to)) {
+      return null;
+    }
+    
+    setSelectedPreset('Select');
+    handleClick();
   };
 
   const fetchData = async (startDate: string, endDate: string) => {
@@ -233,7 +272,7 @@ export function Dashboard({
         currStartDate = subDays(endDate, 89);
         break;
     }
-    console.log(getDateString(currStartDate), getDateString(startDate), getDateString(max([currStartDate, startDate])));
+    
     currStartDate = max([currStartDate, startDate]);
 
     let prevStartDate = currStartDate;
@@ -269,10 +308,6 @@ export function Dashboard({
         prevEndDate = subDays(currStartDate, 1);
         break;
     }
-
-    console.log(selectedPreset, selectedPrevious);
-    console.log(currStartDate, currEndDate);
-    console.log(prevStartDate, prevEndDate);
     
     if (
       currStartDate &&
@@ -297,8 +332,7 @@ export function Dashboard({
       getDateString(prevStartDate),
       getDateString(prevEndDate)
     );
-    console.log(currData);
-    console.log(prevData);
+
     let processedData = [];
     for (let i = 0; i < Math.min(currData.length, prevData.length); i++) {
       const json = {
@@ -340,8 +374,6 @@ export function Dashboard({
   };
 
   const getVolume = () => {
-    console.log('getvolume');
-    console.log(data);
     let curr = 0;
     let prev = 0;
     for (let i = 0; i < data.length; i++) {
@@ -361,11 +393,26 @@ export function Dashboard({
 
   return (<>
     <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
-      <Dropdown options={['id4', 'id3', 'id2', 'id1']} onSelect={handleChartChange} />
-      <DateRangePicker onChange={handleDateRangeChange} dateRange={dateRange}/>
-      <Dropdown options={presetDropdown} onSelect={handlePresetChange} />
+      <Dropdown
+        options={['id4', 'id3', 'id2', 'id1']}
+        onSelect={handleChartChange}
+        placeholder={'id1'}
+      />
+      <DateRangePicker
+        onChange={handleDateRangeChange}
+        dateRange={dateRange}
+      />
+      <Dropdown
+        options={presetDropdown}
+        onSelect={handlePresetChange}
+        value={selectedPreset}
+      />
       <p className="text-gray-500">compared to</p>
-      <Dropdown options={previousDropdown} onSelect={handlePreviousChange}/>
+      <Dropdown
+        options={previousDropdown}
+        onSelect={handlePreviousChange}
+        placeholder={selectedPrevious}
+      />
       <Button onClick={handleClick}>Update</Button>
     </div>
 
@@ -455,12 +502,12 @@ export function Dashboard({
     </ResponsiveContainer>
     <div className="w-screen sm:w-3/5 mb-8">
       <div className="flex justify-between text-sm mt-2">
-        {/* <span className="text-indigo-600">{chartDates.currStart.toDateString()}</span>
-        <span className="text-indigo-600">{chartDates.currEnd.toDateString()}</span> */}
+        <span className="text-indigo-600">{chartDates.currStart?.toDateString()}</span>
+        <span className="text-indigo-600">{chartDates.currEnd?.toDateString()}</span>
       </div>
       <div className="flex justify-between text-sm mt-2">
-        {/* <span className="text-gray-500">{chartDates.prevStart.toDateString()}</span>
-        <span className="text-gray-500">{chartDates.prevEnd.toDateString()}</span> */}
+        <span className="text-gray-500">{chartDates.prevStart?.toDateString()}</span>
+        <span className="text-gray-500">{chartDates.prevEnd?.toDateString()}</span>
       </div>
     </div>
   </>);
