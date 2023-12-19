@@ -34,6 +34,9 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { SelectContent } from '@radix-ui/react-select';
 
+import { getDateString, fetchData, getData, getVolume } from '@/lib/dashboardUtils';
+import { Chart } from '@/lib/types';
+
 const initial_data = [
     {
       name: 'Page A',
@@ -92,18 +95,6 @@ const previousDropdown = [
   'Previous Period',
 ];
 
-/**
- * Formats a Date object into a string in the 'YYYY-MM-DD' format.
- * @param {Date} date - The Date object to be formatted.
- * @returns {string} A string representing the formatted date.
- */
-const getDateString = (date: Date): string => {
-  const year = date.toLocaleString('default', { year: 'numeric' });
-  const month = date.toLocaleString('default', { month: '2-digit' });
-  const day = date.toLocaleString('default', { day: '2-digit' });
-  return year + '-' + month + '-' + day;
-};
-
 export function Dashboard({
     className,
     ...props
@@ -124,7 +115,7 @@ export function Dashboard({
     prevEnd: dateRange.to,
   });
 
-  const [chart, setChart] = useState({
+  const [chart, setChart] = useState<Chart>({
     id: 'id1',
     dashboardName: 'Linear Transaction Data (Line Chart)',
     chartType: 'line',
@@ -160,16 +151,22 @@ export function Dashboard({
   };
 
   const handleChartChange = async (selectedOption: string) => {
-    // Make query
-    const response = await fetch(`http://localhost:3001/chart/${selectedOption}`);
-    let raw = await response.json();
-    raw = raw.chart[0];
-    setChart({
-      id: selectedOption,
-      dashboardName: raw.dashboardName,
-      chartType: raw.chartType,
-      sqlQuery: raw.sqlQuery,
-    });
+    try {
+      // Make query
+      const response = await fetch(`http://localhost:3001/chart/${selectedOption}`);
+      let raw = await response.json();
+      raw = raw.chart[0];
+      setChart({
+        id: selectedOption,
+        dashboardName: raw.dashboardName,
+        chartType: raw.chartType,
+        sqlQuery: raw.sqlQuery,
+      });
+    } catch (error) {
+      throw error;
+    } finally {
+      await handleClick();
+    }
   }
 
   const handlePreviousChange = (selectedOption: string) => {
@@ -179,19 +176,29 @@ export function Dashboard({
   };
 
   const handleClick = async () => {
-    // if (typeof dateRange.startDate == 'undefined' || typeof dateRange.endDate == 'undefined') {
-    //   return;
-    // }
-    const result = await getData(dateRange);
+    if (!dateRange || !dateRange.from || !dateRange.to) {
+      return null;
+    }
+    const { result, currRange, prevRange }: any = await getData(dateRange, selectedPreset, selectedPrevious, chart);
+    if (
+      currRange.from &&
+      currRange.to &&
+      prevRange.from &&
+      prevRange.to
+    ) {
+      setChartDates({
+        currStart: currRange.from,
+        currEnd: currRange.to,
+        prevStart: prevRange.from,
+        prevEnd: prevRange.to,
+      });
+    }
     setData(result);
     setChartType(chart.chartType);
     setChartName(chart.dashboardName);
   };
 
   const handleDateRangeChange = async (selectedDateRange: DateRange) => {
-    if (!selectedDateRange.from || !selectedDateRange.to) {
-      return null;
-    }
     setDateRange(selectedDateRange);
     let from: Date;
     switch (selectedPreset) {
@@ -209,7 +216,12 @@ export function Dashboard({
         break;
     }
     const to: Date = startOfToday();
-    if (isEqual(startOfDay(selectedDateRange.from), from) && isEqual(startOfDay(selectedDateRange.to), to)) {
+    if (
+      selectedDateRange.from &&
+      selectedDateRange.to &&
+      isEqual(startOfDay(selectedDateRange.from), from) &&
+      isEqual(startOfDay(selectedDateRange.to), to)
+    ) {
       return null;
     }
     
@@ -217,178 +229,8 @@ export function Dashboard({
     handleClick();
   };
 
-  const fetchData = async (startDate: string, endDate: string) => {
-    // Build SQL query
-    const sqlQuery = `
-      SELECT * FROM
-      (
-        ${chart.sqlQuery}
-      ) sub
-      WHERE
-        created_at >= '${startDate}'
-        and created_at <= '${endDate}'
-    `;
-  
-    // Make query
-    const response = await fetch('http://localhost:3001/query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sqlQuery: sqlQuery }),
-      });
-  
-    if (!response.ok) {
-      throw new Error(`Error fetching data from server: ${response.statusText}`);
-    }
-    const contentType = response.headers.get('Content-Type');
-  
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error(`Unexpected Content-Type: ${contentType}`);
-    }
-    const raw_data = await response.json();
-    return raw_data;
-  }
-
-  // convert to two parameters of DateRange type
-  const getData = async (dateRange: DateRange) => {
-    if (!dateRange.from || !dateRange.to) {
-      return null;
-    }
-    const startDate = dateRange.from;
-    const endDate = dateRange.to;
-
-    let currStartDate = startDate;
-    let currEndDate = endDate;
-
-    switch (selectedPreset) {
-      case 'Current Month':
-        currStartDate = startOfMonth(endDate);
-        break;
-      case 'Last 30 days':
-        currStartDate = subDays(endDate, 29);
-        break;
-      case 'Last 90 days':
-        currStartDate = subDays(endDate, 89);
-        break;
-    }
-    
-    currStartDate = max([currStartDate, startDate]);
-
-    let prevStartDate = currStartDate;
-    let prevEndDate = currEndDate;
-
-    switch (selectedPrevious) {
-      case 'Previous Period':
-        switch (selectedPreset) {
-          case 'Current Month':
-            prevStartDate = startOfMonth(subMonths(currStartDate, 1));
-            prevEndDate = endOfMonth(subMonths(currEndDate, 1));
-            break;
-          case 'Last 30 days':
-            prevStartDate = subDays(currStartDate, 30);
-            prevEndDate = subDays(currStartDate, 1);
-            break;
-          case 'Last 90 days':
-            prevStartDate = subDays(currStartDate, 90);
-            prevEndDate = subDays(currStartDate, 1);
-            break;
-        }
-        break;
-      case 'Previous Month':
-        prevStartDate = startOfMonth(subMonths(currStartDate, 1));
-        prevEndDate = endOfMonth(subMonths(currEndDate, 1));
-        break;
-      case 'Previous 30 days':
-        prevStartDate = subDays(currStartDate, 30);
-        prevEndDate = subDays(currStartDate, 1);
-        break;
-      case 'Previous 90 days':
-        prevStartDate = subDays(currStartDate, 90);
-        prevEndDate = subDays(currStartDate, 1);
-        break;
-    }
-    
-    if (
-      currStartDate &&
-      currEndDate &&
-      prevStartDate &&
-      prevEndDate
-    ) {
-      setChartDates({
-        currStart: currStartDate,
-        currEnd: currEndDate,
-        prevStart: prevStartDate,
-        prevEnd: prevEndDate,
-      });
-    }
-
-    // Query selected date ranges
-    const currData = await fetchData(
-      getDateString(currStartDate),
-      getDateString(currEndDate)
-    );
-    const prevData = await fetchData(
-      getDateString(prevStartDate),
-      getDateString(prevEndDate)
-    );
-
-    let processedData = [];
-    for (let i = 0; i < Math.min(currData.length, prevData.length); i++) {
-      const json = {
-        pv: currData[i].amount,
-        uv: prevData[i].amount,
-      }
-      processedData.push(json);
-    }
-    
-    if (chart.chartType == 'bar') {
-      let interval = 1;
-      if (selectedPreset == 'Last 90 days') {
-        interval = 30;
-      } else {
-        interval = 7;
-      }
-      const groupedData = [];
-      let tempGroup = { uv: 0, pv: 0 };
-
-      for (let i = 0; i < processedData.length; i++) {
-        tempGroup.uv += processedData[i].uv;
-        tempGroup.pv += processedData[i].pv;
-
-        if ((i + 1) % interval === 0 || i === processedData.length - 1) {
-          // Add the grouped values to the result array
-          groupedData.push({
-            uv: tempGroup.uv / interval,
-            pv: tempGroup.pv / interval,
-          });
-
-          // Reset the temporary group for the next interval
-          tempGroup = { uv: 0, pv: 0 };
-        }
-      }
-      processedData = groupedData;
-    }
-
-    return processedData;
-  };
-
-  const getVolume = () => {
-    let curr = 0;
-    let prev = 0;
-    for (let i = 0; i < data.length; i++) {
-      curr += data[i]['pv'];
-      prev += data[i]['uv'];
-    }
-    const percent = Math.round((curr - prev) / prev * 100);
-    return { curr, prev, percent };
-  };
-
   useEffect(() => {
-    (async () => {
-      const result = await getData(dateRange);
-      setData(result);
-    })();
+    handleClick();
   }, []);
 
   return (<>
@@ -421,19 +263,19 @@ export function Dashboard({
       <div className="flex justify-between items-center mt-4">
         <div>
           <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-          <p className="text-indigo-600">{Math.round(getVolume()['curr'])}</p>
+          <p className="text-indigo-600">{Math.round(getVolume(data)['curr'])}</p>
         </div>
         <div className="text-center">
           <p className="text-xs text-gray-500 mb-1">Change</p>
           {
-            getVolume()['percent'] > 0
-              ? <p className="text-green-500">+{getVolume()['percent']}%</p>
-              : <p className="text-red-500">{getVolume()['percent']}%</p>
+            getVolume(data)['percent'] > 0
+              ? <p className="text-green-500">+{getVolume(data)['percent']}%</p>
+              : <p className="text-red-500">{getVolume(data)['percent']}%</p>
           }
         </div>
         <div>
           <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-          <p className="text-gray-500">{Math.round(getVolume()['prev'])}</p>
+          <p className="text-gray-500">{Math.round(getVolume(data)['prev'])}</p>
         </div>
       </div>
     </div>
