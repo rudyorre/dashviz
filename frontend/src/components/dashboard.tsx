@@ -34,8 +34,10 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
 
 import { getData, getVolume } from '@/lib/dashboardUtils';
-import { Chart, Dashboard as DashboardType } from '@/lib/types';
+import { Chart as ChartType, Dashboard as DashboardType } from '@/lib/types';
 import { StringToBoolean } from 'class-variance-authority/types';
+
+import { Chart } from '@/components/chart';
 
 const presetDropdown = [
   'Last 90 days',
@@ -53,7 +55,7 @@ const previousDropdown = [
 interface DashboardProps {
   name: string,
   containerStyle: React.CSSProperties,
-  onClickDashboardItem: (dashboardItem: Chart) => void,
+  onClickDashboardItem: (dashboardItem: ChartType) => void,
 };
 
 export function Dashboard({
@@ -72,7 +74,7 @@ export function Dashboard({
   const [selectedPreset, setSelectedPreset] = useState<string>('Current Month');
   const [selectedPrevious, setSelectedPrevious] = useState<string>('Previous Period');
 
-  const [charts, setCharts] = useState<Chart[]>([]);
+  const [charts, setCharts] = useState<ChartType[]>([]);
 
   const [chartDates, setChartDates] = useState({
     currStart: dateRange.from,
@@ -81,7 +83,7 @@ export function Dashboard({
     prevEnd: dateRange.to,
   });
 
-  const [chart, setChart] = useState<Chart>({
+  const [chart, setChart] = useState<ChartType>({
     name: 'name1',
     id: 'id1',
     dashboardName: 'Linear Transaction Data (Line Chart)',
@@ -125,7 +127,7 @@ export function Dashboard({
       // Make query
       const response = await fetch(`http://localhost:3001/chart/${selectedOption}`);
       let raw = await response.json();
-      raw = raw.chart[0];
+      raw = raw.chart;
       setChart({
         name: '',
         id: selectedOption,
@@ -227,11 +229,12 @@ export function Dashboard({
 
   return (<>
     <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
-      <Dropdown
+      {/* <Dropdown
         options={['id4', 'id3', 'id2', 'id1']}
         onSelect={handleChartChange}
         placeholder={'id1'}
-      />
+      /> */}
+      <h2 className="text-3xl font-bold tracking-tight mt-10">{name} Dashboard</h2>
       <DateRangePicker
         onChange={handleDateRangeChange}
         dateRange={dateRange}
@@ -249,99 +252,19 @@ export function Dashboard({
       />
     </div>
 
-    <div className="w-screen sm:w-3/5 mt-8">
-      <h2 className="text-lg font-semibold text-gray-800 mb-2">{chartName}</h2>
-      <div className="flex justify-between items-center mt-4">
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-          <p className="text-indigo-600">{Math.round(getVolume(data)['curr'])}</p>
+    <div className="grid grid-cols-2 gap-5 mt-10">
+      {charts.map((c: ChartType) => {
+        return <div key={c.id}>
+          <Chart
+            chartId={c.id}
+            containerStyle={{}}
+            d={data}
+            dateRange={dateRange}
+            preset={selectedPreset}
+            previous={selectedPrevious}
+          />
         </div>
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">Change</p>
-          {
-            getVolume(data)['percent'] > 0
-              ? <p className="text-green-500">+{getVolume(data)['percent']}%</p>
-              : <p className="text-red-500">{getVolume(data)['percent']}%</p>
-          }
-        </div>
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-          <p className="text-gray-500">{Math.round(getVolume(data)['prev'])}</p>
-        </div>
-      </div>
-    </div>
-    
-    <ResponsiveContainer width="60%" minWidth={400} aspect={1.5}>
-        {chartType == 'line' ?
-          <LineChart
-              width={500}
-              height={300}
-              data={data}
-              margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-              }}
-          >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis type="number" domain={['auto', 'auto']}/>
-              <Tooltip />
-              <Legend />
-              <Line
-                  name="Current"
-                  type="monotone"
-                  dataKey="pv"
-                  stroke="#566CD6"
-                  activeDot={{ r: 8 }}
-              />
-              <Line
-                  name="Previous"
-                  type="monotone"
-                  dataKey="uv"
-                  stroke="#727889"
-              />
-          </LineChart>
-          :
-          <BarChart
-              width={500}
-              height={300}
-              data={data}
-              margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-              }}
-          >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis type="number" domain={['auto', 'auto']}/>
-              <Tooltip />
-              <Legend />
-              <Bar
-                  name="Current"
-                  dataKey="pv"
-                  fill="#566CD6"
-              />
-              <Bar
-                  name="Previous"
-                  dataKey="uv"
-                  fill="#727889"
-              />
-          </BarChart>
-        }
-    </ResponsiveContainer>
-    <div className="w-screen sm:w-3/5 mb-8">
-      <div className="flex justify-between text-sm mt-2">
-        <span className="text-indigo-600">{chartDates.currStart?.toDateString()}</span>
-        <span className="text-indigo-600">{chartDates.currEnd?.toDateString()}</span>
-      </div>
-      <div className="flex justify-between text-sm mt-2">
-        <span className="text-gray-500">{chartDates.prevStart?.toDateString()}</span>
-        <span className="text-gray-500">{chartDates.prevEnd?.toDateString()}</span>
-      </div>
+      })}
     </div>
   </>);
 }

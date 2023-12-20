@@ -134,7 +134,7 @@ app.get('/chart/:id', async (req: Request, res: Response) => {
             return;
         }
 
-        res.json({ chart });
+        res.json({ chart: chart[0] });
     } catch (error) {
         console.error('Error fetching dashboard:', error);
         res.status(500).json({ error: 'Internal Server Error' });

@@ -59,7 +59,7 @@ export default function Home() {
         </div>
       </div>
 
-      <h2 className="text-3xl font-bold tracking-tight mt-10">{selectedDashboard} Dashboard</h2>
+      {/* <h2 className="text-3xl font-bold tracking-tight mt-10">{selectedDashboard} Dashboard</h2> */}
 
       {selectedDashboard ?
         <Dashboard 
