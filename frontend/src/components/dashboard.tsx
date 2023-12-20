@@ -229,27 +229,28 @@ export function Dashboard({
 
   return (<>
     <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
-      {/* <Dropdown
-        options={['id4', 'id3', 'id2', 'id1']}
-        onSelect={handleChartChange}
-        placeholder={'id1'}
-      /> */}
-      <h2 className="text-3xl font-bold tracking-tight mt-10">{name} Dashboard</h2>
-      <DateRangePicker
-        onChange={handleDateRangeChange}
-        dateRange={dateRange}
-      />
-      <Dropdown
-        options={presetDropdown}
-        onSelect={handlePresetChange}
-        value={selectedPreset}
-      />
-      <p className="text-gray-500">compared to</p>
-      <Dropdown
-        options={previousDropdown}
-        onSelect={handlePreviousChange}
-        placeholder={selectedPrevious}
-      />
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Transactions Dashboard</h2>
+        <div className="flex items-center space-x-2">
+          {/* <CalendarDateRangePicker /> */}
+          <DateRangePicker
+            onChange={handleDateRangeChange}
+            dateRange={dateRange}
+          />
+          <Dropdown
+            options={presetDropdown}
+            onSelect={handlePresetChange}
+            value={selectedPreset}
+          />
+          <p className="text-gray-500">compared to</p>
+          <Dropdown
+            options={previousDropdown}
+            onSelect={handlePreviousChange}
+            placeholder={selectedPrevious}
+          />
+        </div>
+      </div>
+      {/* <h2 className="text-3xl font-bold tracking-tight mt-10">{name} Dashboard</h2> */}
     </div>
 
     <div className="grid grid-cols-2 gap-5 mt-10">
