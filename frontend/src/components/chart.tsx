@@ -112,12 +112,14 @@ export function Chart({ chartId, containerStyle, d, dateRange, preset, previous 
                         dataKey="pv"
                         stroke="#566CD6"
                         activeDot={{ r: 8 }}
+                        dot={false}
                     />
                     <Line
                         name="Previous"
                         type="monotone"
                         dataKey="uv"
                         stroke="#727889"
+                        dot={false}
                     />
                 </LineChart>
                 :
