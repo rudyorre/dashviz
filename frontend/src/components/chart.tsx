@@ -21,53 +21,55 @@ import { getVolume, getData } from '@/lib/dashboardUtils';
 interface ChartProps {
     chartId: string, // fetches chart by id from the server
     containerStyle: React.CSSProperties, // wraps the chart in a container
-    d: any,
     dateRange: DateRange,
     preset: string,
     previous: string,
 };
 
-export function Chart({ chartId, containerStyle, d, dateRange, preset, previous }: ChartProps) {
+export function Chart({ chartId, containerStyle, dateRange, preset, previous }: ChartProps) {
     const [chart, setChart] = useState<ChartType | null>();
     const [data, setData] = useState([]);
-    const [range, setRange] = useState<{curr: DateRange, prev: DateRange}>({
-        curr: {
-            from: undefined,
-            to: undefined,
-        },
-        prev: {
-            from: undefined,
-            to: undefined,
-        }
+    const [range, setRange] = useState<{curr: DateRange, prev: DateRange, avail: DateRange}>({
+        curr: { from: undefined, to: undefined },
+        prev: { from: undefined, to: undefined },
+        avail: { from: undefined, to: undefined },
     });
 
     useEffect(() => {
-        const fetchChartData = async () => {
-            const data = await fetch(`http://localhost:3001/chart/${chartId}`);
-            const json = await data.json();
-            setChart(json.chart);
-        };
         if (chart == null) {
-            fetchChartData();
+            (async () => {
+                const data = await fetch(`http://localhost:3001/chart/${chartId}`);
+                const json = await data.json();
+                setChart(json.chart);
+            })();
         } else {
             (async () => {
                 if (dateRange.from && dateRange.to) {
-                    const { result, currRange, prevRange }: any = await getData(
-                        dateRange,
-                        preset,
-                        previous,
-                        chart
-                    );
+                    // const { result, currRange, prevRange }: any = await getData(
+                    //     dateRange,
+                    //     preset,
+                    //     previous,
+                    //     chart
+                    // );
+                    const response = await fetch('http://localhost:3001/retrieve-data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ dateRange, previous, chartId: chart.id }),
+                    });
+                    const { result, currRangeStr, prevRangeStr } = await response.json();
+                    console.log(result, currRangeStr, currRangeStr);
+                    const currRange = { from: new Date(currRangeStr.from), to: new Date(currRangeStr.to) };
+                    const prevRange = { from: new Date(prevRangeStr.from), to: new Date(prevRangeStr.to) };
                     setData(result);
-                    setRange({ curr: currRange, prev: prevRange });
+                    setRange({ curr: currRange, prev: prevRange, avail: prevRange });
                 }
             })();
-            console.log(data);
         }
     }, [chart, dateRange, previous]);
+
     return (
         <div>
-            <div className="w-screen sm:w-3/5 mt-8">
+            <div className="w-screen sm:w-3/5 mt-8 mx-auto">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">{chart?.name}</h2>
                 <div className="flex justify-between items-center mt-4">
                     <div>
@@ -88,7 +90,7 @@ export function Chart({ chartId, containerStyle, d, dateRange, preset, previous 
                     </div>
                 </div>
             </div>
-            <ResponsiveContainer width="60%" minWidth={400} aspect={1.5}>
+            <ResponsiveContainer width="80%" minWidth={400} aspect={1.5} className="mx-auto">
                 {chart?.chartType == 'line' ?
                 <LineChart
                     width={500}
@@ -152,7 +154,7 @@ export function Chart({ chartId, containerStyle, d, dateRange, preset, previous 
                 </BarChart>
                 }
             </ResponsiveContainer>
-            <div className="w-screen sm:w-3/5 mb-8">
+            <div className="w-screen sm:w-3/5 mb-8 mx-auto">
             <div className="flex justify-between text-sm mt-2">
                 <span className="text-indigo-600">{range.curr.from?.toDateString()}</span>
                 <span className="text-indigo-600">{range.curr.to?.toDateString()}</span>

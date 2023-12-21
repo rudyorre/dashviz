@@ -34,17 +34,7 @@ export default function Home() {
 
   return (<>
     <Navbar className='mx-6' items={dashboards ? dashboards : []} onSelect={setSelectedDashboard} />
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      
-      <div className="flex items-center justify-between max-w-5xl w-full p-4 mx-auto font-mono text-sm">
-        {/* <Dropdown
-          options={dashboards ? dashboards : []}
-          onSelect={setSelectedDashboard}
-          placeholder={selectedDashboard ? selectedDashboard : ''} 
-        /> */}
-        
-      </div>
-
+    <main className="flex min-h-screen flex-col justify-between p-12">
       {selectedDashboard ?
         <Dashboard 
           name={selectedDashboard}
@@ -54,7 +44,6 @@ export default function Home() {
         :
         'LOADING'
       }
-
       <div className="mb-32 grid text-center lg:max-w-6xl lg:w-full lg:mb-0 lg:text-left">
         <div className="flex items-center justify-between max-w-5xl w-full p-4 mx-auto font-mono text-sm">
         <div>© 2023 Rudy Orre</div>

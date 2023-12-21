@@ -31,7 +31,6 @@ export function Dropdown({ options, onSelect, value, placeholder }: DropdownProp
       if (value && (!selectedValue || value !== selectedValue)) {
         handleSelect(value);
         setKey(+new Date());
-        console.log('set new key!');
       }
     }, [value, selectedValue]);
 

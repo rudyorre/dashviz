@@ -1,18 +1,5 @@
 'use client';
 
-import { 
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-} from 'recharts';
-
 import {
   addDays,
   startOfMonth,
@@ -64,8 +51,6 @@ export function Dashboard({
   onClickDashboardItem,
 }: DashboardProps) {
   const prevNameRef = useRef<string | null>(null);
-
-  const [data, setData] = useState<any>([]);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
@@ -75,28 +60,6 @@ export function Dashboard({
   const [selectedPrevious, setSelectedPrevious] = useState<string>('Previous Period');
 
   const [charts, setCharts] = useState<ChartType[]>([]);
-
-  const [chartDates, setChartDates] = useState({
-    currStart: dateRange.from,
-    currEnd: dateRange.to,
-    prevStart: dateRange.from,
-    prevEnd: dateRange.to,
-  });
-
-  const [chart, setChart] = useState<ChartType>({
-    name: 'name1',
-    id: 'id1',
-    dashboardName: 'Linear Transaction Data (Line Chart)',
-    chartType: 'line',
-    sqlQuery: 'select * from transactions_linear',
-    xAxisField: 'x-axis',
-    yAxisField: 'y-axis',
-    dateField: { table: 'transactions_linear', field: 'created_at'},
-  });
-
-  const [chartName, setChartName] = useState(chart.dashboardName);
-
-  const [chartType, setChartType] = useState(chart.chartType);
   
   const handlePresetChange = async (selectedOption: string) => {
     setSelectedPreset(selectedOption);
@@ -119,60 +82,11 @@ export function Dashboard({
       from: from,
       to: startOfToday(),
     });
-    await handleClick();
   };
-
-  const handleChartChange = async (selectedOption: string) => {
-    try {
-      // Make query
-      const response = await fetch(`http://localhost:3001/chart/${selectedOption}`);
-      let raw = await response.json();
-      raw = raw.chart;
-      setChart({
-        name: '',
-        id: selectedOption,
-        dashboardName: raw.dashboardName,
-        chartType: raw.chartType,
-        sqlQuery: raw.sqlQuery,
-        xAxisField: '',
-        yAxisField: '',
-        dateField: { table: '', field: '' },
-      });
-    } catch (error) {
-      throw error;
-    } finally {
-      await handleClick();
-    }
-  }
 
   const handlePreviousChange = async (selectedOption: string) => {
     setSelectedPrevious(selectedOption);
     // Do something with the selected preset, e.g., update your chart data
-    await handleClick();
-  };
-
-  const handleClick = async () => {
-    // console.log(dateRange.from?.toDateString(), '-', dateRange.to?.toDateString());
-    if (!dateRange || !dateRange.from || !dateRange.to) {
-      return null;
-    }
-    const { result, currRange, prevRange }: any = await getData(dateRange, selectedPreset, selectedPrevious, chart);
-    if (
-      currRange.from &&
-      currRange.to &&
-      prevRange.from &&
-      prevRange.to
-    ) {
-      setChartDates({
-        currStart: currRange.from,
-        currEnd: currRange.to,
-        prevStart: prevRange.from,
-        prevEnd: prevRange.to,
-      });
-    }
-    setData(result);
-    setChartType(chart.chartType);
-    setChartName(chart.dashboardName);
   };
 
   const handleDateRangeChange = async (selectedDateRange: DateRange) => {
@@ -201,9 +115,7 @@ export function Dashboard({
     ) {
       return null;
     }
-    
     setSelectedPreset('Select');
-    await handleClick();
   };
 
   useEffect(() => {
@@ -224,15 +136,13 @@ export function Dashboard({
       fetchData();
       prevNameRef.current = name;
     }
-    handleClick();
-  }, [dateRange, chart, selectedPrevious, charts, name]);
+  }, [dateRange, selectedPrevious, selectedPreset, charts, name]);
 
   return (<>
-    <div style={{ display: 'flex', gap: '10px' }} className="items-center mt-8">
+    <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Transactions Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{name} Dashboard</h2>
         <div className="flex items-center space-x-2">
-          {/* <CalendarDateRangePicker /> */}
           <DateRangePicker
             onChange={handleDateRangeChange}
             dateRange={dateRange}
@@ -241,6 +151,7 @@ export function Dashboard({
             options={presetDropdown}
             onSelect={handlePresetChange}
             value={selectedPreset}
+            placeholder={selectedPreset}
           />
           <p className="text-gray-500">compared to</p>
           <Dropdown
@@ -250,16 +161,13 @@ export function Dashboard({
           />
         </div>
       </div>
-      {/* <h2 className="text-3xl font-bold tracking-tight mt-10">{name} Dashboard</h2> */}
     </div>
-
-    <div className="grid grid-cols-2 gap-5 mt-10">
+    <div className="grid grid-cols-2 gap-1 mt-5">
       {charts.map((c: ChartType) => {
         return <div key={c.id}>
           <Chart
             chartId={c.id}
             containerStyle={{}}
-            d={data}
             dateRange={dateRange}
             preset={selectedPreset}
             previous={selectedPrevious}
