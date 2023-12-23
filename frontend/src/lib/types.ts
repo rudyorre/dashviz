@@ -20,3 +20,16 @@ export interface Chart {
         field: string,
     },
 };
+
+export enum PreviousPreset {
+    PreviousPeriod = 'Previous Period',
+    PreviousMonth = 'Previous Month',
+    Previous30Days = 'Previous 30 days',
+    Previous90Days = 'Previous 90 days',
+};
+
+export enum CurrentPreset { 
+    CurrentMonth = 'Current Month',
+    Last30Days = 'Last 30 days',
+    Last90Days = 'Last 90 days',
+};

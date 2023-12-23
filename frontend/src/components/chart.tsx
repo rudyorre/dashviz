@@ -11,24 +11,40 @@ import {
     Bar,
 } from 'recharts';
 
+import {
+    differenceInDays,
+    subDays,
+    startOfMonth,
+    endOfMonth,
+    subMonths,
+    startOfToday,
+    addDays,
+} from 'date-fns';
+
 import { DateRange } from 'react-day-picker';
 
 import { useState, useEffect } from 'react';
 
-import { Chart as ChartType } from '@/lib/types';
-import { getVolume, getData } from '@/lib/dashboardUtils';
+import { Chart as ChartType, CurrentPreset, PreviousPreset } from '@/lib/types';
+import { getVolume, getData, getRequiredDateRanges, groupData } from '@/lib/dashboardUtils';
 
 interface ChartProps {
     chartId: string, // fetches chart by id from the server
     containerStyle: React.CSSProperties, // wraps the chart in a container
     dateRange: DateRange,
     preset: string,
-    previous: string,
+    previous: PreviousPreset,
 };
 
 export function Chart({ chartId, containerStyle, dateRange, preset, previous }: ChartProps) {
     const [chart, setChart] = useState<ChartType | null>();
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<{
+        currDateField: Date,
+        currAmount: number,
+        prevDateField: Date | undefined,
+        prevAmount: number | undefined,
+      }[]>([]);
+    const [cachedData, setCachedData] = useState([]);
     const [range, setRange] = useState<{curr: DateRange, prev: DateRange, avail: DateRange}>({
         curr: { from: undefined, to: undefined },
         prev: { from: undefined, to: undefined },
@@ -45,27 +61,57 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
         } else {
             (async () => {
                 if (dateRange.from && dateRange.to) {
-                    // const { result, currRange, prevRange }: any = await getData(
-                    //     dateRange,
-                    //     preset,
-                    //     previous,
-                    //     chart
-                    // );
-                    const response = await fetch('http://localhost:3001/retrieve-data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ dateRange, previous, chartId: chart.id }),
-                    });
-                    const { result, currRangeStr, prevRangeStr } = await response.json();
-                    console.log(result, currRangeStr, currRangeStr);
-                    const currRange = { from: new Date(currRangeStr.from), to: new Date(currRangeStr.to) };
-                    const prevRange = { from: new Date(prevRangeStr.from), to: new Date(prevRangeStr.to) };
-                    setData(result);
-                    setRange({ curr: currRange, prev: prevRange, avail: prevRange });
+                    // const response = await fetch('http://localhost:3001/retrieve-data', {
+                    //     method: 'POST',
+                    //     headers: { 'Content-Type': 'application/json' },
+                    //     body: JSON.stringify({ dateRange, previous, chartId: chart.id }),
+                    // });
+                    // const { result, currRangeStr, prevRangeStr } = await response.json();
+                    // const currRange = { from: new Date(currRangeStr.from), to: new Date(currRangeStr.to) };
+                    // const prevRange = { from: new Date(prevRangeStr.from), to: new Date(prevRangeStr.to) };
+                    // setData(result);
+                    // setRange({ curr: currRange, prev: prevRange, avail: {from:undefined, to:undefined} });
+                    const { currRange, prevRange, requiredRange } = getRequiredDateRanges(
+                        dateRange as { from: Date, to: Date },
+                        previous
+                    );
+
+                    // If requested range exceeds cached range
+                    if (
+                        !range.avail.from ||
+                        !range.avail.to ||
+                        range.avail.from > requiredRange.from ||
+                        range.avail.to < requiredRange.to
+                    ) {
+                        const response2 = await fetch('http://localhost:3001/fetch-data-by-date', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ dateRange: requiredRange, chartId: chart.id }),
+                        });
+                        const { response: output } = await response2.json();
+                        setCachedData(output);
+                        setRange({ 
+                            curr: range.curr,
+                            prev: range.prev,
+                            avail: requiredRange,
+                        });
+                    }
+
+                    // If cached data is loaded
+                    if (cachedData.length > 0) {
+                        const result = groupData(cachedData, prevRange, currRange);
+                        setData(result);
+                        setRange({
+                            curr: currRange,
+                            prev: prevRange,
+                            avail: requiredRange,
+                        });
+                    }
+
                 }
             })();
         }
-    }, [chart, dateRange, previous]);
+    }, [chart, dateRange, previous, cachedData]);
 
     return (
         <div>
@@ -74,19 +120,19 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
                 <div className="flex justify-between items-center mt-4">
                     <div>
                         <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-                        <p className="text-indigo-600">{Math.round(getVolume(data)['curr'])}</p>
+                        <p className="text-indigo-600">{Math.round(getVolume(data, range.curr)['curr'])}</p>
                     </div>
                     <div className="text-center">
                     <p className="text-xs text-gray-500 mb-1">Change</p>
                     {
-                        getVolume(data)['percent'] > 0
-                        ? <p className="text-green-500">+{getVolume(data)['percent']}%</p>
-                        : <p className="text-red-500">{getVolume(data)['percent']}%</p>
+                        getVolume(data, range.curr)['percent'] > 0
+                        ? <p className="text-green-500">+{getVolume(data, range.curr)['percent']}%</p>
+                        : <p className="text-red-500">{getVolume(data, range.curr)['percent']}%</p>
                     }
                     </div>
                     <div>
                     <p className="text-xs text-gray-500 mb-1">Gross Volume</p>
-                    <p className="text-gray-500">{Math.round(getVolume(data)['prev'])}</p>
+                    <p className="text-gray-500">{Math.round(getVolume(data, range.curr)['prev'])}</p>
                     </div>
                 </div>
             </div>
@@ -111,7 +157,7 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
                     <Line
                         name="Current"
                         type="monotone"
-                        dataKey="pv"
+                        dataKey="currAmount"
                         stroke="#566CD6"
                         activeDot={{ r: 8 }}
                         dot={false}
@@ -119,7 +165,7 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
                     <Line
                         name="Previous"
                         type="monotone"
-                        dataKey="uv"
+                        dataKey="prevAmount"
                         stroke="#727889"
                         dot={false}
                     />
@@ -143,12 +189,12 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
                     <Legend />
                     <Bar
                         name="Current"
-                        dataKey="pv"
+                        dataKey="currAmount"
                         fill="#566CD6"
                     />
                     <Bar
                         name="Previous"
-                        dataKey="uv"
+                        dataKey="prevAmount"
                         fill="#727889"
                     />
                 </BarChart>

@@ -11,6 +11,7 @@ import {
     fetchQuery,
     retrieveData,
     getDateString,
+    fetchDataByDate,
 } from './supabaseClient';
 
 dotenv.config();
@@ -119,6 +120,23 @@ app.post('/retrieve-data', async (req: Request, res: Response) => {
         res.json({ result, currRangeStr, prevRangeStr });
     } catch (error) {
         
+    }
+});
+
+/**
+ * Fetches raw data given a date range and chart. `chartId` is used to fetch
+ * the actual chart data (which contains sql queries) to shield from direct
+ * frontend access.
+ */
+app.post('/fetch-data-by-date', async (req: Request, res: Response) => {
+    try {
+        const dateRange: DateRange = req.body.dateRange;
+        const chartId: Chart['id'] = req.body.chartId;
+        const chart = await fetchChartById(chartId);
+        const response = await fetchDataByDate(dateRange, chart);
+        res.json({ response });
+    } catch (error) {
+
     }
 });
 

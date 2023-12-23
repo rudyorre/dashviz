@@ -255,3 +255,35 @@ export const retrieveData = async (
 
    return { result: processedData, currRange, prevRange };
 };
+
+export const fetchDataByDate = async (
+   dateRange: DateRange,
+   chart: Chart,
+) => {
+   if (!dateRange.from || !dateRange.to) {
+      return null;
+   }
+
+   // Build SQL query
+   const response = await fetchQuery(`
+      SELECT * FROM
+      (
+      ${chart.sqlQuery}
+      ) sub
+      WHERE
+      ${chart.dateField.field} >= '${getDateString(dateRange.from)}'
+      and ${chart.dateField.field} <= '${getDateString(dateRange.to)}'
+   `);
+
+   let processedData = [];
+   for (let i = 0; i < Math.min(response.length, response.length); i++) {
+      const json = {
+         amount: response[i].amount,
+         dateField: response[i][chart.dateField.field],
+      };
+      
+      processedData.push(json);
+   }
+   
+   return processedData;
+};

@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
 
 import { getData, getVolume } from '@/lib/dashboardUtils';
-import { Chart as ChartType, Dashboard as DashboardType } from '@/lib/types';
+import { Chart as ChartType, Dashboard as DashboardType, PreviousPreset } from '@/lib/types';
 import { StringToBoolean } from 'class-variance-authority/types';
 
 import { Chart } from '@/components/chart';
@@ -57,7 +57,7 @@ export function Dashboard({
   });
 
   const [selectedPreset, setSelectedPreset] = useState<string>('Current Month');
-  const [selectedPrevious, setSelectedPrevious] = useState<string>('Previous Period');
+  const [selectedPrevious, setSelectedPrevious] = useState<PreviousPreset>(PreviousPreset.PreviousPeriod);
 
   const [charts, setCharts] = useState<ChartType[]>([]);
   
@@ -69,10 +69,10 @@ export function Dashboard({
         from = startOfMonth(startOfToday());
         break;
       case 'Last 30 days':
-        from = subDays(startOfToday(), 30);
+        from = subDays(startOfToday(), 29);
         break;
       case 'Last 90 days':
-        from = subDays(startOfToday(), 90);
+        from = subDays(startOfToday(), 89);
         break;
       default:
         from = startOfToday();
@@ -84,7 +84,7 @@ export function Dashboard({
     });
   };
 
-  const handlePreviousChange = async (selectedOption: string) => {
+  const handlePreviousChange = async (selectedOption: PreviousPreset) => {
     setSelectedPrevious(selectedOption);
     // Do something with the selected preset, e.g., update your chart data
   };
@@ -97,10 +97,10 @@ export function Dashboard({
         from = startOfMonth(startOfToday());
         break;
       case 'Last 30 days':
-        from = subDays(startOfToday(), 30);
+        from = subDays(startOfToday(), 29);
         break;
       case 'Last 90 days':
-        from = subDays(startOfToday(), 90);
+        from = subDays(startOfToday(), 89);
         break;
       default:
         from = startOfToday();
@@ -161,19 +161,21 @@ export function Dashboard({
           />
         </div>
       </div>
+      {charts.length == 0 ? <div className="mx-auto flex items-center justify-center">No associated charts for this dashboard 😔.</div> : <div />}
     </div>
     <div className="grid grid-cols-2 gap-1 mt-5">
       {charts.map((c: ChartType) => {
-        return <div key={c.id}>
-          <Chart
-            chartId={c.id}
-            containerStyle={{}}
-            dateRange={dateRange}
-            preset={selectedPreset}
-            previous={selectedPrevious}
-          />
-        </div>
-      })}
+          return <div key={c.id}>
+            <Chart
+              chartId={c.id}
+              containerStyle={{}}
+              dateRange={dateRange}
+              preset={selectedPreset}
+              previous={selectedPrevious}
+            />
+          </div>
+        })
+      }
     </div>
   </>);
 }
