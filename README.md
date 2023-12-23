@@ -10,9 +10,63 @@
   <img src="https://img.shields.io/badge/Vercel-%23000000.svg?style=flat&logo=vercel&logoColor=white" />
 </p>
 
-A simple dashboard interface for line and bar charts.
+A simple and dynamic dashboard interface for line and bar charts.
 
-## Supabase Config
+## Overview
+What makes this dashboard unique is that the available dashboards and their
+corresponding charts are all defined in the database. This means the raw data
+and the definitions for the views for this data are all stored in one place.
+
+```ts
+interface Dashboard {
+   name: string,
+   id: string,
+	 dateFilter: { 
+      name: string, 
+      initialDateRange: 'LAST_90_DAYS' | 'LAST_30_DAYS' | 'CURRENT_MONTH',
+   },
+};
+
+interface Chart {
+  name: string,
+  id: string,
+  dashboardName: string,
+  chartType: 'line' | 'bar',
+  sqlQuery: string,
+  xAxisField: string,
+  yAxisField: string,
+  dateField: { table: string, field: string },
+}
+```
+
+The tables defined by the above schemas, as well as the raw time series data
+itself, are all stored in a single Supabase instance. Each chart instance will
+have their own SQL query, table, and field for defining how to query the
+correct data. All of these fields used for generating a SQL query is done in
+the backend, thus shielding from frontend access.
+
+## Usage
+
+### Frontend
+Install npm packages and run in development mode:
+  ```bash
+  cd frontend
+  npm i
+  npm run dev
+  ```
+
+### Backend
+Install npm packages and run server with ts-node:
+  ```bash
+  cd backend
+  npm i
+  npx ts-node src/index.ts
+  ```
+
+## Database
+Won't go into too much detail for setting up Supabase, but most of the tables
+used for this project were generated using random data generators like the one
+below:
 
 ### Dummy Data Generators
 ```sql
@@ -20,16 +74,11 @@ INSERT INTO transactions (id, amount, created_at, description)
 SELECT
     md5(random()::text),
     random() * 1000,
-    generate_series('2022-01-01'::timestamp, '2022-12-31'::timestamp, '1 day') AS created_at,
+    generate_series('2023-01-01'::timestamp, '2023-12-31'::timestamp, '1 day') AS created_at,
     'Description' AS description
 ```
 
-### Extensions
+### Supabase Extensions
 Aside from the default extensions, I enabled
 [pg_jsonschema](https://github.com/supabase/pg_jsonschema) which enables
 JSON schema validation for `json` and `jsonb` data types.
-
-## Assumptions
-- Unique columns in postgres tables:
-  - `dashboard`: `name`, `id`
-  - `chart`: `name`, `id`

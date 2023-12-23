@@ -1,30 +1,22 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
+
 import {
-  addDays,
   startOfMonth,
   startOfDay,
-  endOfDay,
-  endOfMonth,
-  subMonths,
   subDays,
-  max,
   startOfToday,
   isEqual,
 } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-
 import { DateRangePicker } from '@/components/dateRangePicker';
+
 import { Dropdown } from '@/components/dropdown';
-import { Button } from '@/components/ui/button';
-
-import { useState, useEffect, useRef } from 'react';
-
-import { getData, getVolume } from '@/lib/dashboardUtils';
-import { Chart as ChartType, Dashboard as DashboardType, PreviousPreset } from '@/lib/types';
-import { StringToBoolean } from 'class-variance-authority/types';
-
 import { Chart } from '@/components/chart';
+
+import { Chart as ChartType, Dashboard as DashboardType, PreviousPreset } from '@/lib/types';
+
 
 const presetDropdown = [
   'Last 90 days',
@@ -86,7 +78,6 @@ export function Dashboard({
 
   const handlePreviousChange = async (selectedOption: PreviousPreset) => {
     setSelectedPrevious(selectedOption);
-    // Do something with the selected preset, e.g., update your chart data
   };
 
   const handleDateRangeChange = async (selectedDateRange: DateRange) => {

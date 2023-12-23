@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 import { 
     LineChart,
     Line,
@@ -11,22 +13,10 @@ import {
     Bar,
 } from 'recharts';
 
-import {
-    differenceInDays,
-    subDays,
-    startOfMonth,
-    endOfMonth,
-    subMonths,
-    startOfToday,
-    addDays,
-} from 'date-fns';
-
 import { DateRange } from 'react-day-picker';
 
-import { useState, useEffect } from 'react';
-
-import { Chart as ChartType, CurrentPreset, PreviousPreset } from '@/lib/types';
-import { getVolume, getData, getRequiredDateRanges, groupData } from '@/lib/dashboardUtils';
+import { Chart as ChartType, PreviousPreset } from '@/lib/types';
+import { getVolume, getRequiredDateRanges, groupData } from '@/lib/dashboardUtils';
 
 interface ChartProps {
     chartId: string, // fetches chart by id from the server
@@ -61,16 +51,6 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
         } else {
             (async () => {
                 if (dateRange.from && dateRange.to) {
-                    // const response = await fetch('http://localhost:3001/retrieve-data', {
-                    //     method: 'POST',
-                    //     headers: { 'Content-Type': 'application/json' },
-                    //     body: JSON.stringify({ dateRange, previous, chartId: chart.id }),
-                    // });
-                    // const { result, currRangeStr, prevRangeStr } = await response.json();
-                    // const currRange = { from: new Date(currRangeStr.from), to: new Date(currRangeStr.to) };
-                    // const prevRange = { from: new Date(prevRangeStr.from), to: new Date(prevRangeStr.to) };
-                    // setData(result);
-                    // setRange({ curr: currRange, prev: prevRange, avail: {from:undefined, to:undefined} });
                     const { currRange, prevRange, requiredRange } = getRequiredDateRanges(
                         dateRange as { from: Date, to: Date },
                         previous

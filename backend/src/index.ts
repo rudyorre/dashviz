@@ -9,8 +9,6 @@ import {
     fetchDashboardByName,
     fetchChartsByDashboard,
     fetchQuery,
-    retrieveData,
-    getDateString,
     fetchDataByDate,
 } from './supabaseClient';
 
@@ -100,26 +98,6 @@ app.post('/query', async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching from database:', error);
         res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-/**
- * 
- */
-app.post('/retrieve-data', async (req: Request, res: Response) => {
-    try {
-        const dateRange: DateRange = req.body.dateRange;
-        const previous: PreviousPreset = req.body.previous;
-        const chartId: Chart['id'] = req.body.chartId;
-        
-        const chart = await fetchChartById(chartId);
-
-        const { result, currRange, prevRange }: any = await retrieveData(dateRange, previous, chart);
-        const currRangeStr = { from: getDateString(currRange.from), to: getDateString(currRange.to) };
-        const prevRangeStr = { from: getDateString(prevRange.from), to: getDateString(prevRange.to) };
-        res.json({ result, currRangeStr, prevRangeStr });
-    } catch (error) {
-        
     }
 });
 

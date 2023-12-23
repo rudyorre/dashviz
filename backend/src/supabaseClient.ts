@@ -4,12 +4,6 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 import { DateRange } from 'react-day-picker';
 import {
-   differenceInDays,
-   subDays,
-   subMonths,
-   startOfMonth,
-   endOfMonth,
-   startOfToday,
    startOfDay,
 } from 'date-fns';
 
@@ -53,7 +47,7 @@ export const fetchChartById = async (id: string): Promise<Chart> => {
 };
 
 /**
- * 
+ * Fetch all dashboard names.
  * @returns 
  */
 export const fetchDashboardNames = async () => {
@@ -97,7 +91,7 @@ export const fetchDashboardByName = async (name: string) => {
 };
 
 /**
- * 
+ * Fetches charts by dashboard name.
  * @param name 
  * @returns 
  */
@@ -120,7 +114,7 @@ export const fetchChartsByDashboard = async (name: string) => {
 };
 
 /**
- * 
+ * Fetches data with a SQL query.
  * @param sqlQuery 
  * @returns 
  */
@@ -147,115 +141,16 @@ export const getDateString = (date: Date): string => {
    return year + '-' + month + '-' + day;
 };
 
-export const fetchData = async (
-   range: DateRange,
-   chart: Chart,
-) => {
-   if (!range.from || !range.to) {
-       return null;
-   }
-
-   // Build SQL query
-   const response = await fetchQuery(`
-      SELECT * FROM
-      (
-      ${chart.sqlQuery}
-      ) sub
-      WHERE
-      ${chart.dateField.field} >= '${getDateString(range.from)}'
-      and ${chart.dateField.field} <= '${getDateString(range.to)}'
-   `);
-   return response;
-};
-
 /**
- * Assumes the `dateRange` is properly set from the date range picker / preset
- * dropdown. The `previous` dropdown will be used with the `dateRange` to
- * extend the query filter range.
- * @param dateRange 
- * @param previous 
- * @param chart 
+ * Fetches data from a database for a specific date range, tailored for a given chart.
+ *
+ * @param dateRange - The date range to filter the data, containing `from` and `to` Date objects.
+ * @param chart - Chart configuration object containing:
+ *      - sqlQuery: The base SQL query to execute.
+ *      - dateField: An object with a `field` property specifying the name of the date field in the database.
+ * @returns An array of objects with `amount` and `dateField` properties, or null if the date range is invalid.
+ * @throws Error if the database query fails.
  */
-export const retrieveData = async (
-   dateRange: DateRange,
-   previous: PreviousPreset,
-   chart: Chart
-) => {
-   if (!dateRange.from || !dateRange.to) {
-      return null;
-   }
-
-   const currRange = {...dateRange};
-   const prevRange = {...dateRange};
-   const currLength: number = differenceInDays(dateRange.to, dateRange.from);
-   switch (previous) {
-      case PreviousPreset.PreviousPeriod:
-         prevRange.from = subDays(dateRange.from, currLength);
-         prevRange.to = subDays(dateRange.from, 1);
-         break;
-      case PreviousPreset.PreviousMonth:
-         prevRange.from = startOfMonth(subMonths(startOfToday(), 1));
-         prevRange.to = endOfMonth(prevRange.from);
-         break;
-      case PreviousPreset.Previous30Days:
-         prevRange.from = subDays(dateRange.from, 30);
-         prevRange.to = subDays(dateRange.from, 1);
-         break;
-      case PreviousPreset.Previous90Days:
-         prevRange.from = subDays(dateRange.from, 90);
-         prevRange.to = subDays(dateRange.from, 1);
-         break;
-   }
-
-   // Query selected date ranges
-   const currData = await fetchData(currRange, chart);
-   const prevData = await fetchData(prevRange, chart);
-
-   if (currData === null || prevData === null) {
-      return null;
-   }
-
-   let processedData = [];
-   for (let i = 0; i < Math.min(currData.length, prevData.length); i++) {
-      const json = {
-         pv: currData[i].amount,
-         uv: prevData[i].amount,
-      }
-      processedData.push(json);
-   }
-   
-   if (chart.chartType == 'bar') {
-      let interval = 1;
-      // TODO
-      // if (selectedPreset == 'Last 90 days') {
-      //    interval = 30;
-      // } else {
-      //    interval = 7;
-      // }
-   const groupedData = [];
-   let tempGroup = { uv: 0, pv: 0 };
-
-   for (let i = 0; i < processedData.length; i++) {
-      tempGroup.uv += processedData[i].uv;
-      tempGroup.pv += processedData[i].pv;
-
-      if ((i + 1) % interval === 0 || i === processedData.length - 1) {
-         // Add the grouped values to the result array
-         groupedData.push({
-         uv: tempGroup.uv / interval,
-         pv: tempGroup.pv / interval,
-         });
-
-         // Reset the temporary group for the next interval
-         tempGroup = { uv: 0, pv: 0 };
-      }
-   }
-   processedData = groupedData;
-   }
-
-   return { result: processedData, currRange, prevRange };
-};
-
 export const fetchDataByDate = async (
    dateRange: DateRange,
    chart: Chart,
