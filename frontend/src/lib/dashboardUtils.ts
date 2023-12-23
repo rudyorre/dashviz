@@ -41,7 +41,6 @@ export const getDateString = (date: Date): string => {
  *  - percent: The percentage change between current and previous volume.
  */
 export const getVolume = (data: any, currRange: DateRange) => {
-  console.log(currRange);
   if (!currRange.from || !currRange.to) {
     return { curr: 0, prev: 0, percent: 0 };
   }

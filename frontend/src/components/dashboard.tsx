@@ -129,7 +129,7 @@ export function Dashboard({
     }
   }, [dateRange, selectedPrevious, selectedPreset, charts, name]);
 
-  return (<>
+  return <div style={containerStyle}>
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">{name} Dashboard</h2>
@@ -156,17 +156,17 @@ export function Dashboard({
     </div>
     <div className="grid grid-cols-2 gap-1 mt-5">
       {charts.map((c: ChartType) => {
-          return <div key={c.id}>
+          return <div key={c.id} onClick={() => {onClickDashboardItem(c)}}>
             <Chart
               chartId={c.id}
+              // containerStyle={{ backgroundColor: 'lightsalmon'}}
               containerStyle={{}}
               dateRange={dateRange}
-              preset={selectedPreset}
               previous={selectedPrevious}
             />
           </div>
         })
       }
     </div>
-  </>);
+  </div>;
 }

@@ -22,11 +22,10 @@ interface ChartProps {
     chartId: string, // fetches chart by id from the server
     containerStyle: React.CSSProperties, // wraps the chart in a container
     dateRange: DateRange,
-    preset: string,
     previous: PreviousPreset,
 };
 
-export function Chart({ chartId, containerStyle, dateRange, preset, previous }: ChartProps) {
+export function Chart({ chartId, containerStyle, dateRange, previous }: ChartProps) {
     const [chart, setChart] = useState<ChartType | null>();
     const [data, setData] = useState<{
         currDateField: Date,
@@ -94,7 +93,7 @@ export function Chart({ chartId, containerStyle, dateRange, preset, previous }: 
     }, [chart, dateRange, previous, cachedData]);
 
     return (
-        <div>
+        <div style={containerStyle}>
             <div className="w-screen sm:w-3/5 mt-8 mx-auto">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">{chart?.name}</h2>
                 <div className="flex justify-between items-center mt-4">

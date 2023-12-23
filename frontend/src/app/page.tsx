@@ -10,11 +10,16 @@ import { UserNav } from '@/components/user-nav';
 import { Dashboard } from '@/components/dashboard';
 import { Dropdown } from '@/components/dropdown';
 import { Heading1 } from 'lucide-react';
+import { Chart } from '@/lib/types';
+import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboards, setDashboards] = useState(null);
   const [selectedDashboard, setSelectedDashboard] = useState(null);
+  const [selectedChart, setSelectedChart] = useState<Chart | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,12 +43,19 @@ export default function Home() {
       {selectedDashboard ?
         <Dashboard 
           name={selectedDashboard}
+          // containerStyle={{ backgroundColor: 'lightskyblue'}}
           containerStyle={{}}
-          onClickDashboardItem={(dashboardItem) => {}}
+          onClickDashboardItem={(dashboardItem) => {
+            toast({
+              title: "You've selected a new chart",
+              description: `${dashboardItem.name}`,
+            });
+          }}
         />
         :
-        'LOADING'
+        ''
       }
+      <Toaster />
       <div className="mb-32 grid text-center lg:max-w-6xl lg:w-full lg:mb-0 lg:text-left">
         <div className="flex items-center justify-between max-w-5xl w-full p-4 mx-auto font-mono text-sm">
         <div>© 2023 Rudy Orre</div>
