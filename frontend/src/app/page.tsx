@@ -1,15 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Search } from '@/components/search';
 import { Navbar } from '@/components/navbar';
-import { UserNav } from '@/components/user-nav';
 import { Dashboard } from '@/components/dashboard';
-import { Dropdown } from '@/components/dropdown';
-import { Heading1 } from 'lucide-react';
 import { Chart } from '@/lib/types';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
@@ -43,7 +37,7 @@ export default function Home() {
       {selectedDashboard ?
         <Dashboard 
           name={selectedDashboard}
-          // containerStyle={{ backgroundColor: 'lightskyblue'}}
+          // containerStyle={{ backgroundColor: 'lightskyblue'}} // FOR DEMONSTRATION
           containerStyle={{}}
           onClickDashboardItem={(dashboardItem) => {
             toast({

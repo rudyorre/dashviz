@@ -159,7 +159,7 @@ export function Dashboard({
           return <div key={c.id} onClick={() => {onClickDashboardItem(c)}}>
             <Chart
               chartId={c.id}
-              // containerStyle={{ backgroundColor: 'lightsalmon'}}
+              // containerStyle={{ backgroundColor: 'lightsalmon'}} // FOR DEMONSTRATION
               containerStyle={{}}
               dateRange={dateRange}
               previous={selectedPrevious}
