@@ -1,21 +1,24 @@
-# Dash
-<p float="left">
-  <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" />
-  <img src="https://img.shields.io/badge/Next-black?style=flat&logo=next.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tailwind-%2338B2AC.svg?style=flat&logo=tailwind-css&logoColor=white" />
-  <img src="https://img.shields.io/badge/Express-%23404d59.svg?style=flat&logo=express&logoColor=%2361DAFB" />
-  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-%23316192.svg?style=flat&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Vercel-%23000000.svg?style=flat&logo=vercel&logoColor=white" />
-</p>
-
-A simple and dynamic dashboard interface for line and bar charts.
+<div style="text-align: center;">
+  <img src="assets/example.png" width="40%">
+  <h1>Dash</h1>
+  <p float="left">
+    <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white"/>
+    <img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" />
+    <img src="https://img.shields.io/badge/Next-black?style=flat&logo=next.js&logoColor=white" />
+    <img src="https://img.shields.io/badge/Tailwind-%2338B2AC.svg?style=flat&logo=tailwind-css&logoColor=white" />
+    <img src="https://img.shields.io/badge/Express-%23404d59.svg?style=flat&logo=express&logoColor=%2361DAFB" />
+    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white" />
+    <img src="https://img.shields.io/badge/PostgreSQL-%23316192.svg?style=flat&logo=postgresql&logoColor=white" />
+    <img src="https://img.shields.io/badge/Vercel-%23000000.svg?style=flat&logo=vercel&logoColor=white" />
+  </p>
+  A simple and dynamic dashboard interface for line and bar charts.
+</div>
 
 ## Overview
-What makes this dashboard unique is that the available dashboards and their
-corresponding charts are all defined in the database. This means the raw data
-and the definitions for the views for this data are all stored in one place.
+The available dashboards and their corresponding charts are all defined through 
+the database. This means the raw data and the definitions for the views for
+this data are all stored in one place, and require zero changes to the source
+code to update the content.
 
 ```ts
 interface Dashboard {
