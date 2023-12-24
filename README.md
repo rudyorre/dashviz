@@ -1,7 +1,13 @@
-<div style="text-align: center;">
+<h1 align="center">
   <img src="assets/example.png" width="40%">
-  <h1>Dash</h1>
-  <p float="left">
+
+  Dash
+  <br>
+</h1>
+
+<h4 align="center">Simple and dynamic dashboard interface for line and bar charts.</h4>
+<br>
+<p float="left" align="center">
     <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white"/>
     <img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" />
     <img src="https://img.shields.io/badge/Next-black?style=flat&logo=next.js&logoColor=white" />
@@ -11,8 +17,11 @@
     <img src="https://img.shields.io/badge/PostgreSQL-%23316192.svg?style=flat&logo=postgresql&logoColor=white" />
     <img src="https://img.shields.io/badge/Vercel-%23000000.svg?style=flat&logo=vercel&logoColor=white" />
   </p>
-  A simple and dynamic dashboard interface for line and bar charts.
-</div>
+
+<p align="center">
+  <a href="#overview">Overview</a> •
+  <a href="#usage">Usage</a>
+</p>
 
 ## Overview
 The available dashboards and their corresponding charts are all defined through 
