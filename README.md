@@ -5,7 +5,7 @@
   <br>
 </h1>
 
-<h4 align="center">Minimalistic dynamic dashboard interface for line and bar charts.</h4>
+<h4 align="center">Minimal dynamic dashboard interface for line and bar charts.</h4>
 <br>
 <p float="left" align="center">
     <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white"/>
