@@ -1,11 +1,11 @@
 <h1 align="center">
-  <img src="assets/example.png" width="40%">
+  <img src="assets/logo.png" width="40%">
 
-  Dash
+  Dashviz
   <br>
 </h1>
 
-<h4 align="center">Simple and dynamic dashboard interface for line and bar charts.</h4>
+<h4 align="center">Minimalistic dynamic dashboard interface for line and bar charts.</h4>
 <br>
 <p float="left" align="center">
     <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white"/>
@@ -28,6 +28,8 @@ The available dashboards and their corresponding charts are all defined through
 the database. This means the raw data and the definitions for the views for
 this data are all stored in one place, and require zero changes to the source
 code to update the content.
+
+<h1 align="center"><img src="assets/example.png" width="40%"></h1>
 
 ```ts
 interface Dashboard {
